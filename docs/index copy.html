@@ -53,6 +53,31 @@
   .checkbox-item input[type="checkbox"] {
     margin-right: 8px;
   }
+
+  /* ACE Editor enhancements */
+  .ace-controls {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  body.dark-mode .ace-controls {
+    background: #2d2d2d;
+    border-color: #444;
+  }
+
+  .ace-controls label {
+    margin-right: 15px;
+    display: inline-block;
+  }
+
+  .ace-controls select,
+  .ace-controls input[type="number"] {
+    margin-left: 5px;
+    padding: 2px 5px;
+  }
 </style>
 </head>
 <body>
@@ -226,6 +251,66 @@
 
     <h2>Schema</h2>
 
+    <!-- ACE Editor Controls -->
+    <div class="ace-controls">
+      <label>
+        <input type="checkbox" id="ace-wrap" checked> Word Wrap
+      </label>
+      <label>
+        <input type="checkbox" id="ace-invisibles"> Show Invisibles
+      </label>
+      <label>
+        <input type="checkbox" id="ace-highlight"> Highlight Active Line
+      </label>
+      <label>
+        <input type="checkbox" id="ace-autocomplete" checked> Auto-complete
+      </label>
+      <label>
+        Theme:
+        <select id="ace-theme">
+          <option value="ace/theme/chrome">Chrome (Light)</option>
+          <option value="ace/theme/clouds">Clouds (Light)</option>
+          <option value="ace/theme/crimson_editor">Crimson Editor (Light)</option>
+          <option value="ace/theme/dawn">Dawn (Light)</option>
+          <option value="ace/theme/dreamweaver">Dreamweaver (Light)</option>
+          <option value="ace/theme/eclipse">Eclipse (Light)</option>
+          <option value="ace/theme/github">GitHub (Light)</option>
+          <option value="ace/theme/iplastic">iPlastic (Light)</option>
+          <option value="ace/theme/solarized_light">Solarized Light</option>
+          <option value="ace/theme/textmate">TextMate (Light)</option>
+          <option value="ace/theme/tomorrow">Tomorrow (Light)</option>
+          <option value="ace/theme/xcode">Xcode (Light)</option>
+          <option value="ace/theme/kuroir">Kuroir (Light)</option>
+          <option value="ace/theme/ambiance">Ambiance (Dark)</option>
+          <option value="ace/theme/chaos">Chaos (Dark)</option>
+          <option value="ace/theme/clouds_midnight">Clouds Midnight (Dark)</option>
+          <option value="ace/theme/dracula">Dracula (Dark)</option>
+          <option value="ace/theme/cobalt">Cobalt (Dark)</option>
+          <option value="ace/theme/gruvbox">Gruvbox (Dark)</option>
+          <option value="ace/theme/idle_fingers">Idle Fingers (Dark)</option>
+          <option value="ace/theme/kr_theme">krTheme (Dark)</option>
+          <option value="ace/theme/merbivore">Merbivore (Dark)</option>
+          <option value="ace/theme/merbivore_soft">Merbivore Soft (Dark)</option>
+          <option value="ace/theme/mono_industrial">Mono Industrial (Dark)</option>
+          <option value="ace/theme/monokai">Monokai (Dark)</option>
+          <option value="ace/theme/nord_dark">Nord Dark</option>
+          <option value="ace/theme/pastel_on_dark">Pastel on Dark</option>
+          <option value="ace/theme/solarized_dark">Solarized Dark</option>
+          <option value="ace/theme/terminal">Terminal (Dark)</option>
+          <option value="ace/theme/tomorrow_night">Tomorrow Night (Dark)</option>
+          <option value="ace/theme/tomorrow_night_blue">Tomorrow Night Blue (Dark)</option>
+          <option value="ace/theme/tomorrow_night_bright">Tomorrow Night Bright (Dark)</option>
+          <option value="ace/theme/tomorrow_night_eighties">Tomorrow Night 80s (Dark)</option>
+          <option value="ace/theme/twilight">Twilight (Dark)</option>
+          <option value="ace/theme/vibrant_ink">Vibrant Ink (Dark)</option>
+        </select>
+      </label>
+      <label>
+        Font Size:
+        <input type="number" id="ace-fontsize" value="14" min="8" max="24" step="1">
+      </label>
+    </div>
+
     <div class="row columns md:flex">
         <div class='col-7 col-md-7 w-7/12'>
             <label for="schema-textarea">You can change the schema and see how the generated form looks. After you make changes, click "Update Schema"</label>
@@ -388,14 +473,36 @@
     mode: 'ace/mode/json',
     maxLines: Infinity,
     minLines: 5,
-    showFoldWidgets: false,
-    showPrintMargin: false
+    showFoldWidgets: true,
+    showPrintMargin: false,
+    enableBasicAutocompletion: true,
+    enableLiveAutocompletion: true,
+    enableSnippets: true,
+    highlightActiveLine: true,
+    showInvisibles: false,
+    wrap: true,
+    fontSize: 14
   }
 
   var outputTextarea = ace.edit('output-textarea', aceConfig)
   var schemaTextarea = ace.edit('schema-textarea', aceConfig)
   var ajvErrorsTextarea = ace.edit('ajv-errors-textarea', aceConfig)
   var jeErrorsTextarea = ace.edit('je-errors-textarea', aceConfig)
+  
+  // Enable additional ACE features for all editors
+  var allEditors = [outputTextarea, schemaTextarea, ajvErrorsTextarea, jeErrorsTextarea]
+  allEditors.forEach(function(editor) {
+    editor.setOptions({
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: true,
+      enableSnippets: true
+    })
+    editor.setHighlightActiveLine(true)
+    editor.setHighlightSelectedWord(true)
+    editor.setBehavioursEnabled(true)
+    editor.session.setUseWorker(true)
+  })
+  
   var ajvErrorsCount = document.querySelector('#ajv-errors-count')
   var jeErrorsCount = document.querySelector('#je-errors-count')
   var ajv = new AjvValidator()
@@ -747,6 +854,55 @@
       modeToggle.textContent = "🌙 Dark Mode";
     }
   });
+
+  /* ------------------------------------------------- ACE Editor Controls */
+  
+  // Word Wrap Toggle
+  document.getElementById('ace-wrap').addEventListener('change', function(e) {
+    allEditors.forEach(function(editor) {
+      editor.setOption('wrap', e.target.checked)
+    })
+  })
+
+  // Show Invisibles Toggle
+  document.getElementById('ace-invisibles').addEventListener('change', function(e) {
+    allEditors.forEach(function(editor) {
+      editor.setShowInvisibles(e.target.checked)
+    })
+  })
+
+  // Highlight Active Line Toggle
+  document.getElementById('ace-highlight').addEventListener('change', function(e) {
+    allEditors.forEach(function(editor) {
+      editor.setHighlightActiveLine(e.target.checked)
+    })
+  })
+
+  // Auto-complete Toggle
+  document.getElementById('ace-autocomplete').addEventListener('change', function(e) {
+    allEditors.forEach(function(editor) {
+      editor.setOptions({
+        enableBasicAutocompletion: e.target.checked,
+        enableLiveAutocompletion: e.target.checked,
+        enableSnippets: e.target.checked
+      })
+    })
+  })
+
+  // Theme Selector
+  document.getElementById('ace-theme').addEventListener('change', function(e) {
+    allEditors.forEach(function(editor) {
+      editor.setTheme(e.target.value)
+    })
+  })
+
+  // Font Size Adjuster
+  document.getElementById('ace-fontsize').addEventListener('input', function(e) {
+    var size = parseInt(e.target.value)
+    allEditors.forEach(function(editor) {
+      editor.setFontSize(size)
+    })
+  })
 </script>
 </body>
 </html>
